@@ -75,7 +75,10 @@ window.I18N = {
     ms_active: "active", ms_open: "open", ms_waiting: "waiting",
     c_status: "Status", c_mission: "Mission", c_opens: "Opens", c_reward: "Reward", c_penalty: "Penalty", in_time: "in {t}",
 
-    mo_h: "Money", mo_sub: "Net result per day (revenue minus expenses). Big drops are usually investments such as upgrades.",
+    mo_h: "Money", mo_sub: "Incomes and expenditures per day, with the cash balance. Big expense days are usually investments such as upgrades.",
+    mo_range: "Range:", mo_span: "only {n} days collected so far", mo_flow: "Incomes / expenditures",
+    mo_inc: "Incomes", mo_exp: "Expenditures", mo_bal: "Balance (estimated)", mo_bal_s: "Balance", mo_net_s: "Net",
+    mo_items: "Monetary items · all {n} collected days",
     mo_points: "Points over time", mo_net: "Net result per day",
     points_empty: "The points chart appears after the collector has run for at least a day.",
     c_category: "Category", c_revenue: "Revenue", c_expenses: "Expenses",
@@ -175,7 +178,10 @@ window.I18N = {
     ms_active: "aktīva", ms_open: "atvērta", ms_waiting: "gaida",
     c_status: "Statuss", c_mission: "Misija", c_opens: "Atvērsies", c_reward: "Atlīdzība", c_penalty: "Sods", in_time: "pēc {t}",
 
-    mo_h: "Nauda", mo_sub: "Tīrais rezultāts dienā (ieņēmumi mīnus izdevumi). Lielie kritumi parasti ir investīcijas, piemēram, uzlabojumi.",
+    mo_h: "Nauda", mo_sub: "Ieņēmumi un izdevumi pa dienām kopā ar naudas atlikumu. Lielas izdevumu dienas parasti ir investīcijas, piemēram, uzlabojumi.",
+    mo_range: "Periods:", mo_span: "pagaidām savāktas tikai {n} dienas", mo_flow: "Ieņēmumi / izdevumi",
+    mo_inc: "Ieņēmumi", mo_exp: "Izdevumi", mo_bal: "Atlikums (aprēķināts)", mo_bal_s: "Atlikums", mo_net_s: "Neto",
+    mo_items: "Naudas posteņi · visas {n} savāktās dienas",
     mo_points: "Punkti laika gaitā", mo_net: "Tīrais rezultāts dienā",
     points_empty: "Punktu grafiks parādīsies, kad savācējs būs strādājis vismaz dienu.",
     c_category: "Kategorija", c_revenue: "Ieņēmumi", c_expenses: "Izdevumi",
