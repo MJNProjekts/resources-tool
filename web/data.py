@@ -355,7 +355,10 @@ def money(db: Database) -> dict:
     cats = [dict(r) for r in db.q(
         "SELECT name, SUM(revenues) rev, SUM(expenditures) exp FROM money_daily "
         "GROUP BY name ORDER BY SUM(revenues)+SUM(expenditures) DESC")]
-    return {"days": days, "categories": cats}
+    items = [dict(r) for r in db.q(
+        "SELECT date, name, SUM(revenues) rev, SUM(expenditures) exp FROM money_daily "
+        "GROUP BY date, name ORDER BY date")]
+    return {"days": days, "categories": cats, "items": items}
 
 
 def recycling(db: Database) -> dict:

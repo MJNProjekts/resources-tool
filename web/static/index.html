@@ -832,7 +832,17 @@ function money(d) {
   const idx = all.map((x, i) => i).filter((i) => all[i].date >= from);
   $("#moSpan").textContent = all.length < MO_RANGE ? t("mo_span", {n: all.length}) : "";
   flowChart($("#moneyChart"), idx.map((i) => ({t: all[i].date, inc: all[i].rev, exp: all[i].exp, bal: bal[i]})));
-  donut(d.money.categories, all.length);
+  // per-category totals for the chosen range (falls back to all-time totals on an older server)
+  let cats = d.money.categories, nDays = all.length;
+  if (d.money.items) {
+    const acc = {};
+    for (const x of d.money.items) if (x.date >= from) {
+      const c = acc[x.name] ??= {name: x.name, rev: 0, exp: 0};
+      c.rev += x.rev || 0; c.exp += x.exp || 0;
+    }
+    cats = Object.values(acc); nDays = idx.length;
+  }
+  donut(cats, nDays);
   lineChart($("#pointsChart"), d.player.history.map((h) => ({t: h.ts, v: h.points})),
     {title: t("mo_points"), empty: t("points_empty")});
 }
