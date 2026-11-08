@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Your game data (never publish)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+samples/
+samples.zip
+*.zip
+.cache/
+_backup_*/
+_old/
+
+# Python / OS
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

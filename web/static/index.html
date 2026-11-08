@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RESOURCES overview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f3f2ef;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,.10);
+  --s1: #2a78d6; --s1-soft: #cde2fb; --neg: #e34948;
+  --good: #0ca30c; --good-text: #006300; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --boost: #2a78d6; --noboost: #898781;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,.10);
+    --s1: #3987e5; --s1-soft: #184f95; --neg: #e66767; --good-text: #0ca30c;
+    --boost: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,.10);
+  --s1: #3987e5; --s1-soft: #184f95; --neg: #e66767; --good-text: #0ca30c;
+  --boost: #3987e5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 64px; }
+header.top { position: sticky; top: 0; z-index: 1000; background: var(--page);
+  border-bottom: 1px solid var(--ring); }
+header.top .wrap { display: flex; gap: 16px; align-items: center; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; }
+header.top h1 { font-size: 17px; margin: 0; font-weight: 650; }
+header.top .meta { color: var(--muted); font-size: 13px; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+nav a { color: var(--ink-2); text-decoration: none; font-size: 13px; padding: 4px 8px; border-radius: 6px; }
+nav a:hover { background: var(--surface-2); color: var(--ink); }
+button.theme { background: none; border: 1px solid var(--ring); color: var(--ink-2); border-radius: 6px;
+  padding: 4px 8px; cursor: pointer; font: inherit; font-size: 13px; }
+section { margin-top: 32px; scroll-margin-top: 64px; }
+h2 { font-size: 18px; margin: 0 0 4px; font-weight: 650; }
+.sub { color: var(--ink-2); margin: 0 0 14px; font-size: 14px; max-width: 760px; }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+@media (max-width: 860px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+.tile .label { color: var(--ink-2); font-size: 13px; }
+.tile .value { font-size: 26px; font-weight: 650; margin-top: 2px; letter-spacing: -.01em; }
+.tile .delta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.delta.up { color: var(--good-text); } .delta.down { color: var(--critical); }
+.actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.actions li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--surface);
+  border: 1px solid var(--ring); border-radius: 8px; }
+.badge { flex: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: 2px 7px; border-radius: 999px; color: #fff; margin-top: 1px; }
+.badge.critical { background: var(--critical); } .badge.warning { background: var(--warning); color: #0b0b0b; }
+.badge.good { background: var(--good); } .badge.info { background: var(--s1); }
+.empty { color: var(--muted); font-size: 14px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--ring); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font-weight: 600; color: var(--ink-2); font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
+  position: sticky; top: 0; background: var(--surface); cursor: pointer; user-select: none; }
+th.sorted::after { content: " ▾"; } th.sorted.asc::after { content: " ▴"; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--surface-2); }
+.item { display: flex; align-items: center; gap: 8px; }
+.item img { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; }
+.meter { display: inline-flex; align-items: center; gap: 8px; }
+.meter .bar { width: 90px; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.meter .bar i { display: block; height: 100%; border-radius: 4px; background: var(--s1); }
+.meter .bar i.warning { background: var(--warning); } .meter .bar i.critical { background: var(--critical); }
+.pos { color: var(--good-text); } .neg { color: var(--critical); } .mut { color: var(--muted); }
+.toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+.toolbar input, .toolbar select { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--ring); background: var(--surface); color: var(--ink); }
+.stack { display: grid; gap: 16px; }
+.grid2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } nav { display: none; } }
+#map { height: 460px; border-radius: 10px; border: 1px solid var(--ring); }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); margin-top: 8px; flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; background: var(--c); vertical-align: -1px; }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--page); font-size: 12px;
+  padding: 6px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); opacity: 0;
+  transition: opacity .08s; }
+.sb { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.sb .card h3 { margin: 0; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.sb .lvl { color: var(--ink-2); font-weight: 500; font-size: 13px; }
+.sb ul { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; display: grid; gap: 6px; }
+.sb li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+.sb li .bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.sb li .bar i { display: block; height: 100%; background: var(--s1); border-radius: 3px; }
+.sb li .bar i.done { background: var(--good); }
+.sb .foot { margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+.leaflet-popup-content { font: 13px/1.4 system-ui, sans-serif; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2);
+  border: 1px solid var(--ring); border-radius: 999px; padding: 3px 10px; cursor: default; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.status.on .dot { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+.status.off .dot { background: var(--critical); }
+.status .lbl { font-weight: 600; color: var(--ink); }
+button.act { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--s1); background: var(--s1); color: #fff; }
+button.act:disabled { opacity: .55; cursor: progress; }
+.note { font-size: 13px; color: var(--ink-2); }
+.note.err { color: var(--critical); } .note.ok { color: var(--good-text); }
+footer { margin-top: 48px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1 id="title">RESOURCES</h1>
+  <span class="status" id="status" title=""><span class="dot"></span><span class="lbl" data-i18n="monitor">Monitor</span><span id="statusText">…</span></span>
+  <nav>
+    <a href="#todo" data-i18n="nav_todo"></a><a href="#warehouse" data-i18n="nav_warehouse"></a><a href="#mines" data-i18n="nav_mines"></a>
+    <a href="#factories" data-i18n="nav_factories"></a><a href="#invest" data-i18n="nav_invest"></a><a href="#recycling" data-i18n="nav_recycling"></a>
+    <a href="#special" data-i18n="nav_special"></a><a href="#missions" data-i18n="nav_missions"></a>
+    <a href="#money" data-i18n="nav_money"></a><a href="#achievements" data-i18n="nav_achievements"></a>
+  </nav>
+  <button class="theme" id="lang" type="button" title="Language / Valoda">EN</button>
+  <button class="theme" id="theme" type="button" data-i18n="theme"></button>
+</div></header>
+
+<main class="wrap">
+  <div class="tiles" id="tiles"></div>
+
+  <section id="todo">
+    <h2 data-i18n="todo_h"></h2>
+    <p class="sub" data-i18n="todo_sub"></p>
+    <ul class="actions" id="actions"></ul>
+  </section>
+
+  <section id="warehouse">
+    <h2 data-i18n="wh_h"></h2>
+    <p class="sub" data-i18n="wh_sub"></p>
+    <div class="toolbar">
+      <input id="whSearch" type="search" data-i18n-ph="wh_search">
+      <label class="mut"><input type="checkbox" id="whNonZero" checked> <span data-i18n="wh_nonzero"></span></label>
+      <span style="flex:1"></span>
+      <span class="note" id="whNote"></span>
+      <button class="act" id="whRefresh" type="button" data-i18n="wh_refresh"></button>
+    </div>
+    <div class="table-wrap"><table id="whTable"></table></div>
+  </section>
+
+  <section id="mines">
+    <h2 data-i18n="mn_h"></h2>
+    <p class="sub" id="minesSub"></p>
+    <div class="stack">
+      <div>
+        <div class="toolbar"><select id="mineFilter"></select></div>
+        <div id="map"></div>
+        <div class="legend">
+          <span style="--c: var(--boost)" data-i18n="mn_leg_hq"></span>
+          <span style="--c: var(--noboost)" data-i18n="mn_leg_1x"></span>
+          <span class="mut" data-i18n="mn_leg_note"></span>
+        </div>
+      </div>
+      <div class="table-wrap"><table id="mineTable"></table></div>
+    </div>
+  </section>
+
+  <section id="factories">
+    <h2 data-i18n="fac_h"></h2>
+    <p class="sub" id="facSub"></p>
+    <div class="table-wrap"><table id="facTable"></table></div>
+  </section>
+
+  <section id="invest">
+    <h2 data-i18n="inv_h"></h2>
+    <p class="sub" data-i18n-html="inv_sub"></p>
+    <div class="table-wrap"><table id="invFac"></table></div>
+    <p class="sub" style="margin-top:20px" id="invTuSub"></p>
+    <div class="table-wrap"><table id="invTu"></table></div>
+  </section>
+
+  <section id="recycling">
+    <h2 data-i18n="rec_h"></h2>
+    <p class="sub" id="recSub"></p>
+    <div class="table-wrap"><table id="recTable"></table></div>
+  </section>
+
+  <section id="special">
+    <h2 data-i18n="sb_h"></h2>
+    <p class="sub" data-i18n="sb_sub"></p>
+    <div class="sb" id="sbCards"></div>
+  </section>
+
+  <section id="missions">
+    <h2 data-i18n="ms_h"></h2>
+    <p class="sub" data-i18n="ms_sub"></p>
+    <div class="table-wrap"><table id="misTable"></table></div>
+  </section>
+
+  <section id="money">
+    <h2 data-i18n="mo_h"></h2>
+    <p class="sub" data-i18n="mo_sub"></p>
+    <div class="grid2">
+      <div class="card"><div class="chart" id="moneyChart"></div></div>
+      <div class="table-wrap"><table id="moneyTable"></table></div>
+    </div>
+    <div class="card" style="margin-top:16px" id="pointsCard">
+      <div style="font-weight:600;margin-bottom:8px" data-i18n="mo_points"></div>
+      <div class="chart" id="pointsChart"></div>
+    </div>
+  </section>
+
+  <section id="achievements">
+    <h2 data-i18n="ach_h"></h2>
+    <p class="sub" data-i18n="ach_sub"></p>
+    <div class="table-wrap"><table id="achTable"></table></div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/static/i18n.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------- i18n
+let LANG = (() => {
+  try { const l = localStorage.getItem("rg-lang"); if (l === "lv" || l === "en") return l; } catch (_) {}
+  return (navigator.language || "en").toLowerCase().startsWith("lv") ? "lv" : "en";
+})();
+const LOCALE = () => (LANG === "lv" ? "lv-LV" : "en-GB");
+function t(key, p = {}) {
+  let s = (I18N[LANG] && I18N[LANG][key]) ?? I18N.en[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k) => (p[k] ?? ""));
+}
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-i18n]").forEach((el) => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => el.innerHTML = t(el.dataset.i18nHtml));
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => el.placeholder = t(el.dataset.i18nPh));
+  $("#lang").textContent = LANG === "lv" ? "EN" : "LV";
+  document.title = t("page_title");
+}
+
+// ---------------------------------------------------------------- helpers
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function num(n, d = 2) {
+  if (n === null || n === undefined || isNaN(n)) return "–";
+  const a = Math.abs(n);
+  for (const [v, s] of [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"k"]]) if (a >= v) return (n / v).toFixed(d) + s;
+  return Math.round(n).toLocaleString(LOCALE());
+}
+const pct = (x, d = 0) => (x === null || x === undefined) ? "–" : (100 * x).toFixed(d) + "%";
+function hrs(h) {
+  if (h === null || h === undefined) return "–";
+  if (h < 1) return Math.round(h * 60) + " min";
+  if (h < 48) return h.toFixed(1) + " h";
+  return (h / 24).toFixed(1) + " " + t("u_d");
+}
+const when = (ts) => ts ? new Date(ts * 1000).toLocaleString(LOCALE(), {weekday:"short", hour:"2-digit", minute:"2-digit"}) : "–";
+const day = (ts) => new Date(ts * 1000).toLocaleDateString(LOCALE(), {day:"2-digit", month:"2-digit"});
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// sortable table: cols = [{key, label, num, render, sort}]
+function table(el, cols, rows, initial) {
+  let sortKey = initial?.key ?? cols[0].key, asc = initial?.asc ?? false;
+  function draw() {
+    const col = cols.find((c) => c.key === sortKey);
+    const val = (r) => col.sort ? col.sort(r) : r[sortKey];
+    const sorted = [...rows].sort((a, b) => {
+      const x = val(a), y = val(b);
+      if (x === y) return 0;
+      if (x === null || x === undefined) return 1;
+      if (y === null || y === undefined) return -1;
+      return (x < y ? -1 : 1) * (asc ? 1 : -1);
+    });
+    el.innerHTML = "<thead><tr>" + cols.map((c) =>
+      `<th data-k="${c.key}" class="${c.num ? "num" : ""} ${c.key === sortKey ? "sorted" + (asc ? " asc" : "") : ""}">${c.label}</th>`
+    ).join("") + "</tr></thead><tbody>" + (sorted.length ? sorted.map((r) => "<tr>" + cols.map((c) =>
+      `<td class="${c.num ? "num" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("") + "</tr>").join("")
+      : `<tr><td colspan="${cols.length}" class="empty">${t("no_data")}</td></tr>`) + "</tbody>";
+    el.querySelectorAll("th").forEach((th) => th.onclick = () => {
+      asc = th.dataset.k === sortKey ? !asc : false; sortKey = th.dataset.k; draw();
+    });
+  }
+  draw();
+  return { update(r) { rows = r; draw(); } };
+}
+
+// ---------------------------------------------------------------- charts (SVG)
+function barChart(el, data, opt = {}) {
+  const W = 560, H = 220, P = {l: 52, r: 8, t: 10, b: 26};
+  if (!data.length) { el.innerHTML = `<p class="empty">${t("no_data")}</p>`; return; }
+  const vals = data.map((d) => d.value);
+  const max = Math.max(0, ...vals), min = Math.min(0, ...vals);
+  const y = (v) => P.t + (max - v) / ((max - min) || 1) * (H - P.t - P.b);
+  const bw = (W - P.l - P.r) / data.length, gap = Math.min(6, bw * 0.25);
+  const ticks = niceTicks(min, max, 4);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title || "")}">`;
+  for (const tk of ticks) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(tk)}" y2="${y(tk)}" stroke="${tk === 0 ? css("--axis") : css("--grid")}" stroke-width="1"/>`
+    + `<text x="${P.l - 6}" y="${y(tk) + 4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${num(tk, 1)}</text>`;
+  data.forEach((d, i) => {
+    const x = P.l + i * bw + gap / 2, w = bw - gap, y0 = y(0), y1 = y(d.value);
+    const top = Math.min(y0, y1), h = Math.max(Math.abs(y1 - y0), 1), r = Math.min(4, w / 2, h);
+    const neg = d.value < 0, c = neg ? css("--neg") : css("--s1");
+    const path = neg
+      ? `M${x},${top} h${w} v${h - r} q0,${r} ${-r},${r} h${-(w - 2 * r)} q${-r},0 ${-r},${-r} z`
+      : `M${x},${top + h} v${-(h - r)} q0,${-r} ${r},${-r} h${w - 2 * r} q${r},0 ${r},${r} v${h - r} z`;
+    s += `<path d="${path}" fill="${c}"/>`
+      + `<rect x="${P.l + i * bw}" y="${P.t}" width="${bw}" height="${H - P.t - P.b}" fill="transparent" data-i="${i}"/>`;
+    if (data.length <= 16 || i % Math.ceil(data.length / 12) === 0)
+      s += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="${css("--muted")}">${esc(d.label)}</text>`;
+  });
+  el.innerHTML = s + "</svg><div class='tip'></div>";
+  hover(el, (i) => data[i] && `${esc(data[i].label)}: <b>${num(data[i].value)}</b>` + (data[i].extra || ""));
+}
+
+function lineChart(el, pts, opt = {}) {
+  const W = 1100, H = 200, P = {l: 56, r: 12, t: 10, b: 26};
+  if (pts.length < 2) { el.innerHTML = `<p class="empty">${esc(opt.empty || t("too_few"))}</p>`; return; }
+  const t0 = pts[0].t, t1 = pts.at(-1).t;
+  const vs = pts.map((p) => p.v), lo = Math.min(...vs), hi = Math.max(...vs), pad = (hi - lo) * 0.1 || 1;
+  const x = (tt) => P.l + (tt - t0) / ((t1 - t0) || 1) * (W - P.l - P.r);
+  const y = (v) => P.t + (hi + pad - v) / ((hi - lo + 2 * pad)) * (H - P.t - P.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title || "")}">`;
+  for (const tk of niceTicks(lo - pad, hi + pad, 4)) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(tk)}" y2="${y(tk)}" stroke="${css("--grid")}"/>`
+    + `<text x="${P.l - 6}" y="${y(tk) + 4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${num(tk, 1)}</text>`;
+  s += `<path d="${pts.map((p, i) => (i ? "L" : "M") + x(p.t) + "," + y(p.v)).join("")}" fill="none" stroke="${css("--s1")}" stroke-width="2" stroke-linejoin="round"/>`;
+  s += `<circle id="dot" r="4" fill="${css("--s1")}" stroke="${css("--surface")}" stroke-width="2" opacity="0"/>`;
+  s += `<text x="${P.l}" y="${H - 8}" font-size="11" fill="${css("--muted")}">${day(t0)}</text><text x="${W - P.r}" y="${H - 8}" text-anchor="end" font-size="11" fill="${css("--muted")}">${day(t1)}</text>`;
+  s += `<rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="transparent" id="hit"/>`;
+  el.innerHTML = s + "</svg><div class='tip'></div>";
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), dot = el.querySelector("#dot");
+  svg.addEventListener("mousemove", (e) => {
+    const r = svg.getBoundingClientRect(), mx = (e.clientX - r.left) / r.width * W;
+    let best = pts[0]; for (const p of pts) if (Math.abs(x(p.t) - mx) < Math.abs(x(best.t) - mx)) best = p;
+    dot.setAttribute("cx", x(best.t)); dot.setAttribute("cy", y(best.v)); dot.setAttribute("opacity", 1);
+    tip.innerHTML = `${when(best.t)}: <b>${num(best.v)}</b>`;
+    tip.style.left = x(best.t) / W * r.width + "px"; tip.style.top = y(best.v) / H * r.height + "px"; tip.style.opacity = 1;
+  });
+  svg.addEventListener("mouseleave", () => { tip.style.opacity = 0; dot.setAttribute("opacity", 0); });
+}
+
+function hover(el, html) {
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip");
+  svg.addEventListener("mousemove", (e) => {
+    const i = e.target.dataset?.i; if (i === undefined) { tip.style.opacity = 0; return; }
+    const r = svg.getBoundingClientRect(), b = e.target.getBoundingClientRect();
+    tip.innerHTML = html(+i); tip.style.left = (b.left - r.left + b.width / 2) + "px"; tip.style.top = (e.clientY - r.top) + "px"; tip.style.opacity = 1;
+  });
+  svg.addEventListener("mouseleave", () => tip.style.opacity = 0);
+}
+
+function niceTicks(lo, hi, n) {
+  const span = hi - lo || 1, step0 = span / n, mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= step0);
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toPrecision(12));
+  if (lo <= 0 && hi >= 0 && !out.includes(0)) out.push(0);
+  return out;
+}
+
+// ---------------------------------------------------------------- sections
+function tiles(d) {
+  const p = d.player, m = d.mines;
+  const delta = (x, unit = "", rankLike = false) => {
+    if (!x && x !== 0) return `<div class="delta">${t("no_compare")}</div>`;
+    const cls = x === 0 ? "" : x > 0 ? "up" : "down";
+    return `<div class="delta ${cls}">${x > 0 ? "+" : ""}${rankLike ? x.toLocaleString(LOCALE()) : num(x)}${unit}</div>`;
+  };
+  const sub = (k, p2) => `<div class="delta">${t(k, p2)}</div>`;
+  const tl = [
+    [t("tile_points"), num(p.points), p.d24 ? delta(p.d24.points, " " + t("tile_24h")) : delta(null)],
+    [t("tile_rank"), (p.rank ?? 0).toLocaleString(LOCALE()), p.d24 ? delta(p.d24.rank, " " + t("tile_places24"), true) : delta(null)],
+    [t("tile_level"), p.lvl ?? "–", ""],
+    [t("tile_cash"), num(p.cash), sub("tile_cash_sub")],
+    [t("tile_stock"), num(d.stock_value), sub("at_ki")],
+    [t("tile_fac"), num(d.factories.reduce((a, f) => a + (f.gain_real || 0), 0)) + "/h", sub("tile_fac_sub")],
+    [t("tile_mines"), num(m.total_value_h) + "/h", sub("tile_mines_sub", {n: m.count, hq: m.in_hq})],
+    [t("tile_cond"), pct(m.condition_pred, 1), sub("tile_cond_sub", {d: (100 * m.decay_per_day).toFixed(1)})],
+  ];
+  $("#tiles").innerHTML = tl.map(([l, v, x]) => `<div class="card tile"><div class="label">${l}</div><div class="value">${v}</div>${x}</div>`).join("");
+}
+
+function actionText(a) {
+  if (!a.key) return a.text || "";   // older server version sends ready text
+  const p = {...a.p};
+  for (const k of ["h"]) if (p[k] !== undefined) p[k] = Number(p[k]).toFixed(1);
+  for (const k of ["progress", "goal", "price", "break_even"]) if (p[k] !== undefined) p[k] = Number(p[k]).toLocaleString(LOCALE(), {maximumFractionDigits: 0});
+  for (const k of ["gain_m", "full_b"]) if (p[k] !== undefined) p[k] = num(p[k]);
+  if (p.pct !== undefined) p.pct = Math.round(p.pct);
+  return t("act_" + a.key, p);
+}
+function actions(d) {
+  const label = {critical: t("lvl_critical"), warning: t("lvl_warning"), good: t("lvl_good"), info: t("lvl_info")};
+  $("#actions").innerHTML = d.actions.length
+    ? d.actions.map((a) => `<li><span class="badge ${a.level}">${label[a.level]}</span><span>${esc(actionText(a))}</span></li>`).join("")
+    : `<li><span class="badge good">${t("lvl_ok")}</span><span>${t("act_none")}</span></li>`;
+}
+
+function warehouse(d) {
+  const meter = (f) => {
+    if (f === null) return "–";
+    const cls = f >= 0.9 ? "critical" : f >= 0.75 ? "warning" : "";
+    return `<span class="meter"><span class="bar"><i class="${cls}" style="width:${Math.min(f, 1) * 100}%"></i></span>${pct(f)}</span>`;
+  };
+  const cols = [
+    {key: "name", label: t("c_item"), render: (r) => `<span class="item">${r.icon ? `<img src="${esc(r.icon)}" alt="" loading="lazy" onerror="this.remove()">` : ""}${esc(r.name)}</span>`},
+    {key: "amount", label: t("c_stock"), num: true, render: (r) => num(r.amount)},
+    {key: "level", label: t("c_lvl"), num: true},
+    {key: "fill", label: t("c_fill"), render: (r) => meter(r.fill)},
+    {key: "left_h", label: t("c_full_in"), num: true, render: (r) => r.left_h === null ? `<span class="mut">${t("not_growing")}</span>` : `<span class="${r.left_h < 6 ? "neg" : ""}">${hrs(r.left_h)}</span>`,
+      sort: (r) => r.left_h === null ? 1e12 : -r.left_h},
+    {key: "rate", label: t("c_growth"), num: true, render: (r) => r.rate === null ? "–" : `<span class="${r.rate < 0 ? "neg" : ""}">${r.rate > 0 ? "+" : ""}${num(r.rate)}</span>`},
+    {key: "ki", label: t("c_ki"), num: true, render: (r) => num(r.ki)},
+    {key: "premium", label: t("c_buyer"), num: true, render: (r) => r.bid ? `${num(r.bid)} <span class="${r.premium > 0 ? "pos" : "mut"}">${r.premium > 0 ? "+" : ""}${pct(r.premium)}</span>` : '<span class="mut">–</span>'},
+    {key: "value", label: t("c_value"), num: true, render: (r) => num(r.value)},
+  ];
+  const tb = table($("#whTable"), cols, [], {key: "value"});
+  const apply = () => {
+    const q = $("#whSearch").value.toLowerCase(), nz = $("#whNonZero").checked;
+    tb.update(d.warehouse.filter((r) => r.name.toLowerCase().includes(q) && (!nz || r.amount > 0)));
+  };
+  $("#whSearch").oninput = apply; $("#whNonZero").onchange = apply; apply();
+}
+
+let map, layer;
+function mines(d) {
+  const m = d.mines;
+  $("#minesSub").textContent = t("mn_sub", {n: m.count, hq: m.in_hq, v: num(m.total_value_h),
+    when: m.condition_ts ? when(m.condition_ts) : "–", c: pct(m.condition_measured, 1)});
+  const sel = $("#mineFilter"), keep = sel.value;
+  sel.innerHTML = `<option value="">${t("mn_all")}</option>` + m.summary.filter((s) => s.count).map((s) => `<option>${esc(s.resource)}</option>`).join("");
+  sel.value = keep;
+  table($("#mineTable"), [
+    {key: "resource", label: t("c_resource")},
+    {key: "count", label: t("c_count"), num: true},
+    {key: "in_hq", label: "HQ", num: true},
+    {key: "value_h", label: t("c_value_h"), num: true, render: (r) => num(r.value_h)},
+    {key: "rate", label: t("c_produces"), num: true, render: (r) => r.count ? num(r.rate) : '<span class="mut">–</span>'},
+    {key: "need_h", label: t("c_needs"), num: true, render: (r) => r.need_h ? `<span title="${esc(r.users.map((u) => `${u.name}: ${num(u.need_h)}/h`).join("\n"))}">${num(r.need_h)}</span>` : '<span class="mut">–</span>'},
+    {key: "coverage", label: t("c_coverage"), num: true, sort: (r) => r.coverage ?? 1e9, render: (r) => {
+      if (r.coverage === null) return `<span class="mut">${t("not_needed")}</span>`;
+      const c = r.coverage, cls = c < 0.5 ? "critical" : c < 1 ? "warning" : "";
+      const tip = (r.missions_h ? t("tip_missions", {v: num(r.missions_h)}) + "\n" : "") + (r.mines_missing ? t("tip_missing_mines", {n: Math.ceil(r.mines_missing)}) : "");
+      return `<span class="meter" title="${esc(tip)}"><span class="bar"><i class="${cls}" style="width:${Math.min(c, 1) * 100}%"></i></span>${c >= 10 ? "10×+" : pct(c)}</span>`; }},
+    {key: "value_per_mine", label: t("c_per_mine"), num: true, render: (r) => r.count ? num(r.value_per_mine) : "–"},
+    {key: "quality", label: t("c_quality"), num: true, render: (r) => r.count ? pct(r.quality) : "–"},
+  ], m.summary, {key: "coverage", asc: true});
+
+  if (!window.L) { $("#map").innerHTML = `<p class="empty" style="padding:16px">${t("map_fail")}</p>`; return; }
+  if (!map) {
+    map = L.map("map", {scrollWheelZoom: false});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: "© OpenStreetMap"}).addTo(map);
+  }
+  const draw = (fit = true) => {
+    if (layer) layer.remove();
+    layer = L.layerGroup().addTo(map);
+    const f = sel.value, items = m.items.filter((x) => !f || x.resource_name === f);
+    const vmax = Math.max(1, ...m.items.map((x) => x.value_h));
+    const boost = css("--boost"), noboost = css("--noboost"), ring = css("--surface");
+    if (m.hq) {
+      if (m.hq.radius_est) L.circle([m.hq.lat, m.hq.lon], {radius: m.hq.radius_est * 1.05, color: boost, weight: 2, dashArray: "6 6", fill: false}).addTo(layer);
+      L.circleMarker([m.hq.lat, m.hq.lon], {radius: 7, color: ring, weight: 2, fillColor: css("--ink"), fillOpacity: 1})
+        .bindPopup(`<b>HQ</b> ${t("level")} ${esc(m.hq.lvl)}`).addTo(layer);
+    }
+    for (const x of items) {
+      const hq = x.hq_boost >= 10;
+      L.circleMarker([x.lat, x.lon], {
+        radius: 4 + 8 * Math.sqrt(x.value_h / vmax), color: ring, weight: 2,
+        fillColor: hq ? boost : noboost, fillOpacity: .9,
+      }).bindPopup(`<b>${esc(x.name)}</b><br>${esc(x.resource_name)} · ${hq ? "HQ 10x" : "1x"}<br>`
+        + `${num(x.fullrate)}/h ≈ ${num(x.value_h)}/h<br>${t("quality")} ${pct(x.quality)} · TU ${Number(x.techfactor).toFixed(2)}x<br>`
+        + `${t("condition")} ${pct(x.condition, 1)}<br>${t("defence")} ${esc(x.def1)}/${esc(x.def2)}/${esc(x.def3)}`).addTo(layer);
+    }
+    if (!fit) return;
+    const pts = items.map((x) => [x.lat, x.lon]);
+    if (m.hq && !f) {
+      const near = m.items.filter((x) => x.dist_hq < 20000).map((x) => [x.lat, x.lon]);
+      map.fitBounds(L.latLngBounds(near.length ? near : [[m.hq.lat, m.hq.lon]]).pad(0.1));
+    } else if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2));
+  };
+  sel.onchange = () => draw(true);
+  draw(!mines.drawn); mines.drawn = true;
+}
+
+function factories(d) {
+  $("#facSub").innerHTML = t("fac_sub", {tr: Math.round(100 * d.buy_transport), days: d.horizon_days});
+  const has = (r) => r.gain_full !== undefined;
+  const loadCell = (r) => {
+    if (!has(r)) return "–";
+    const cls = r.load < 0.5 ? "critical" : r.load < 0.95 ? "warning" : "";
+    const Lm = r.limiting;
+    const why = Lm ? t("tip_limited", {name: Lm.name, mines: num(Lm.from_mines), fac: num(Lm.from_factories),
+      mis: num(Lm.from_missions), stock: num(Lm.from_stock), days: d.horizon_days, need: num(Lm.demand_total)}) : t("tip_enough");
+    return `<span class="meter" title="${esc(why)}"><span class="bar"><i class="${cls}" style="width:${r.load * 100}%"></i></span>${pct(r.load)}</span>`
+      + (Lm ? `<br><span class="mut">${t("short_of")} ${esc(Lm.name)}</span>` : "");
+  };
+  table($("#facTable"), [
+    {key: "name", label: t("c_factory"), render: (r) => `<b>${esc(r.name)}</b> <span class="mut">${esc(r.lvl)}</span><br><span class="mut">${esc(r.product || "")}</span>`
+      + (r.strike && r.strike !== "no" ? ` <span class="badge critical">${t("strike")}</span>` : "")},
+    {key: "load", label: t("c_load"), render: loadCell},
+    {key: "gain_real", label: t("c_real_profit"), num: true, render: (r) => has(r) ? `<b>${num(r.gain_real)}</b>` : "–"},
+    {key: "gain_full", label: t("c_full_profit"), num: true, render: (r) => has(r) ? num(r.gain_full) : "–"},
+    {key: "margin_pct", label: t("c_margin"), num: true, render: (r) => has(r) ? pct(r.margin_pct) : "–"},
+    {key: "buy", label: t("c_if_buy"), sort: (r) => r.buy?.profit_buy_full ?? -1e18, render: (r) => {
+      const b = r.buy; if (!b) return "–";
+      const ok = b.market_price <= b.break_even;
+      return t("buy_line", {name: esc(b.name), price: `<b>${num(b.market_price)}</b>`, be: `<b class="${ok ? "pos" : "neg"}">${num(b.break_even)}</b>`})
+        + `<br><span class="mut">${t("at_full_load")}</span> <span class="${b.profit_buy_full < 0 ? "neg" : ""}">${num(b.profit_buy_full)}/h</span>`;
+    }},
+    {key: "extra", label: t("c_topup"), num: true, sort: (r) => r.buy?.extra_if_topped_up ?? 0,
+      render: (r) => r.buy?.extra_if_topped_up > 0 ? `<span class="pos">+${num(r.buy.extra_if_topped_up)}</span>` : '<span class="mut">–</span>'},
+    {key: "bottleneck", label: t("c_stock_lasts"), num: true, sort: (r) => r.bottleneck?.hours_of_stock ?? 1e12,
+      render: (r) => r.bottleneck ? `<span class="${r.bottleneck.hours_of_stock < 24 ? "neg" : ""}">${hrs(r.bottleneck.hours_of_stock)}</span><br><span class="mut">${esc(r.bottleneck.name)}</span>` : "–"},
+  ], d.factories, {key: "gain_real"});
+}
+
+function days(x) {
+  if (x === null || x === undefined) return `<span class="neg">${t("no_payback")}</span>`;
+  if (x > 3650) return `<span class="neg" title="${esc(t("tip_no_gain"))}">&gt; 10 ${t("u_y")}</span>`;
+  const cls = x <= 30 ? "pos" : x > 365 ? "neg" : "";
+  const s = x < 1 ? `${Math.round(x * 24)} h` : x < 365 ? `${Math.round(x)} ${t("u_d")}` : `${(x / 365).toFixed(1)} ${t("u_y")}`;
+  return `<span class="${cls}"><b>${s}</b></span>`;
+}
+function invest(d) {
+  const v = d.investments;
+  table($("#invFac"), [
+    {key: "name", label: t("c_factory"), render: (x) => `<b>${esc(x.name)}</b> <span class="mut">${esc(x.lvl)} → ${esc(x.target)}</span>`},
+    {key: "cost", label: t("c_cost"), num: true, render: (x) => `<span title="${esc(t("cash") + " " + num(x.cash) + "\n" + x.items.map((i) => `${i.name}: ${num(i.qty)} (${num(i.value)})`).join("\n"))}">${num(x.cost)}</span>`},
+    {key: "gain_h", label: t("c_gain_h"), num: true, render: (x) => `<span class="${x.gain_h < 0 ? "neg" : ""}">${num(x.gain_h)}</span>`
+      + (Math.abs(x.gain_h - x.own_gain_h) > 1e6 ? `<br><span class="mut" title="${esc(t("tip_affects", {v: num(x.own_gain_h)}))}">${t("affects_others")}</span>` : "")},
+    {key: "gain_d", label: t("c_gain_d"), num: true, sort: (x) => x.gain_h, render: (x) => num(x.gain_h * 24)},
+    {key: "payback_days", label: t("c_payback"), num: true, sort: (x) => x.payback_days ?? 1e12, render: (x) => days(x.payback_days)},
+  ], v.factories, {key: "payback_days", asc: true});
+  const p = v.tu_prices;
+  $("#invTuSub").innerHTML = t("inv_tu_sub", {s: `${v.tu_set.TU1}/${v.tu_set.TU2}/${v.tu_set.TU3}`, cost: `<b>${num(v.tu_set_cost)}</b>`,
+    t1: num(p.TU1.ki), t1c: num(p.TU1.coins), t2: num(p.TU2.ki), t2c: num(p.TU2.coins), t3: num(p.TU3.ki)});
+  table($("#invTu"), [
+    {key: "resource", label: t("c_resource")},
+    {key: "mines", label: t("c_mines"), num: true},
+    {key: "gain_1x", label: t("c_tu_1x"), num: true, render: (x) => num(x.gain_1x)},
+    {key: "payback_1x", label: t("c_payback_1x"), num: true, sort: (x) => x.payback_1x ?? 1e12, render: (x) => days(x.payback_1x)},
+    {key: "gain_hq", label: t("c_tu_hq"), num: true, render: (x) => num(x.gain_hq)},
+    {key: "payback_hq", label: t("c_payback_hq"), num: true, sort: (x) => x.payback_hq ?? 1e12, render: (x) => days(x.payback_hq)},
+  ], v.tu, {key: "payback_1x", asc: true});
+}
+
+function recycling(d) {
+  const r = d.recycling;
+  $("#recSub").innerHTML = t("rec_sub", {m: r.multiplier});
+  table($("#recTable"), [
+    {key: "name", label: t("c_item"), render: (x) => `<b>${esc(x.name)}</b><br><span class="mut">${t("put_in")} ${num(x.qty)}</span>`},
+    {key: "outputs", label: t("c_gets"), sort: (x) => x.recycle_value, render: (x) => x.outputs.map((o) =>
+      `${num(o.qty)} ${esc(o.name)}${o.used_by.length ? ` <span class="pos" title="${esc(t("used_by") + " " + o.used_by.join(", "))}">●</span>` : ""}`).join("<br>")},
+    {key: "sell_value", label: t("c_sell"), num: true, render: (x) => num(x.sell_value)},
+    {key: "recycle_value", label: t("c_recycle"), num: true, render: (x) => num(x.recycle_value)},
+    {key: "ratio", label: t("c_return"), num: true, render: (x) => (x.ratio === null ? "–"
+      : `<span class="${x.ratio >= 1 ? "pos" : x.ratio < 0.6 ? "neg" : ""}">${pct(x.ratio)}</span>`)
+      + (x.per_unit ? `<br><span class="mut" title="${esc(t("tip_per_tu"))}">1 ${esc(x.per_unit.name.replace("Tech Upgrade", "TU"))}: ${num(x.per_unit.via)} ${t("vs_market")} ${num(x.per_unit.market)}</span>` : "")},
+    {key: "stock", label: t("c_stock"), num: true, render: (x) => `${num(x.stock)}<br><span class="mut">${num(x.batches)} ${t("times")}</span>`},
+    {key: "gain_all", label: t("c_recycle_all"), num: true, render: (x) => x.batches
+      ? `<span class="${x.gain_all >= 0 ? "pos" : "neg"}">${x.gain_all >= 0 ? "+" : ""}${num(x.gain_all)}</span><div class="mut" style="white-space:normal;max-width:300px;margin-left:auto">${x.out_all.map((o) => num(o.qty) + " " + esc(o.name)).join(", ")}</div>`
+      : '<span class="mut">–</span>'},
+  ], r.items, {key: "ratio"});
+}
+
+function special(d) {
+  const open = d.specbuildings.filter((s) => !s.max), maxed = d.specbuildings.filter((s) => s.max);
+  const nm = (n) => n.name === "__cash__" ? t("cash") : n.name;
+  $("#sbCards").innerHTML = open.map((s) => `<div class="card">
+      <h3>${esc(s.name)} <span class="lvl">${esc(s.lvl)} → ${esc(s.target)}</span></h3>
+      <ul>${(s.needs || []).map((n) => { const f = Math.min(n.have / n.need, 1);
+        return `<li><span>${esc(nm(n))}</span><span class="${f >= 1 ? "pos" : ""}">${num(n.have)} / ${num(n.need)}</span>
+          <span class="bar"><i class="${f >= 1 ? "done" : ""}" style="width:${f * 100}%"></i></span></li>`; }).join("")}</ul>
+      <div class="foot">${s.ready ? `<span class="badge good">${t("can_upgrade")}</span>` : t("missing_value", {v: `<b>${num(s.missing_value)}</b>`})}</div>
+    </div>`).join("") + (maxed.length ? `<div class="card"><h3>${t("max_level")}</h3><ul>${maxed.map((s) => `<li><span>${esc(s.name)}</span><span class="mut">${esc(s.lvl)}</span></li>`).join("")}</ul></div>` : "");
+}
+
+function missions(d) {
+  const st = {active: `<span class="badge warning">${t("ms_active")}</span>`, open: `<span class="badge good">${t("ms_open")}</span>`, waiting: `<span class="mut">${t("ms_waiting")}</span>`};
+  table($("#misTable"), [
+    {key: "state", label: t("c_status"), render: (r) => st[r.state], sort: (r) => ({active: 2, open: 1, waiting: 0})[r.state]},
+    {key: "title", label: t("c_mission"), render: (r) => `<b>${esc(r.title)}</b><br><span class="mut">${esc(r.descr)}</span>`},
+    {key: "opens_at", label: t("c_opens"), num: true, render: (r) => r.opens_at && r.opens_at > d.now ? `${when(r.opens_at)}<br><span class="mut">${t("in_time", {t: hrs((r.opens_at - d.now) / 3600)})}</span>` : "–",
+      sort: (r) => r.opens_at ? -r.opens_at : 0},
+    {key: "reward", label: t("c_reward")},
+    {key: "penalty", label: t("c_penalty"), num: true, render: (r) => num(r.penalty)},
+  ], d.missions, {key: "state"});
+}
+
+function money(d) {
+  const dd = d.money.days.slice(-30);
+  barChart($("#moneyChart"), dd.map((x) => ({label: day(x.date), value: x.rev - x.exp,
+    extra: `<br>+${num(x.rev)} / −${num(x.exp)}`})), {title: t("mo_net")});
+  table($("#moneyTable"), [
+    {key: "name", label: t("c_category")},
+    {key: "rev", label: t("c_revenue"), num: true, render: (r) => r.rev ? `<span class="pos">+${num(r.rev)}</span>` : "–"},
+    {key: "exp", label: t("c_expenses"), num: true, render: (r) => r.exp ? `<span class="neg">−${num(r.exp)}</span>` : "–"},
+  ], d.money.categories, {key: "exp"});
+  lineChart($("#pointsChart"), d.player.history.map((h) => ({t: h.ts, v: h.points})),
+    {title: t("mo_points"), empty: t("points_empty")});
+}
+
+function achievements(d) {
+  table($("#achTable"), [
+    {key: "title", label: t("c_achievement"), render: (r) => `<b>${esc(r.title)}</b><br><span class="mut">${esc(r.descr)}</span>`},
+    {key: "reward", label: t("c_reward"), num: true, render: (r) => `${num(r.reward)} <span class="mut">${esc(r.reward_item)}</span>`},
+  ], d.achievements, {key: "reward"});
+}
+
+// ---------------------------------------------------------------- boot
+let DATA, STATUS;
+function render() {
+  applyStatic();
+  const d = DATA;
+  if (!d) return;
+  $("#title").textContent = d.player.username ? `${d.player.username} · RESOURCES` : "RESOURCES";
+  tiles(d); actions(d); warehouse(d); mines(d); factories(d); invest(d); recycling(d); special(d); missions(d); money(d); achievements(d);
+  $("#foot").textContent = t("footer", {n: d.credits_24h});
+  if (STATUS) showStatus(STATUS);
+}
+async function load() {
+  try {
+    const r = await fetch("/api/overview");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    DATA = await r.json();
+    render();
+  } catch (e) {
+    document.querySelector("main").insertAdjacentHTML("afterbegin", `<p class="card" style="margin-top:20px">${t("load_fail")} ${esc(e.message)}</p>`);
+  }
+}
+(function theme() {
+  const KEY = "rg-theme", root = document.documentElement;
+  try { const v = localStorage.getItem(KEY); if (v) root.dataset.theme = v; } catch (_) {}
+  $("#theme").onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem(KEY, root.dataset.theme); } catch (_) {}
+    render();
+  };
+})();
+$("#lang").onclick = () => {
+  LANG = LANG === "lv" ? "en" : "lv";
+  try { localStorage.setItem("rg-lang", LANG); } catch (_) {}
+  render();
+};
+// ---------------------------------------------------------------- monitor status
+function ago(ts, now) {
+  if (!ts) return t("never");
+  const m = Math.round((now - ts) / 60);
+  if (m < 1) return t("just_now");
+  if (m < 60) return t("ago", {t: `${m} min`});
+  if (m < 48 * 60) return t("ago", {t: `${(m / 60).toFixed(m < 600 ? 1 : 0)} h`});
+  return t("ago", {t: `${Math.round(m / 1440)} ${t("u_d")}`});
+}
+function showStatus(s) {
+  const el = $("#status");
+  el.classList.toggle("on", s.active); el.classList.toggle("off", !s.active);
+  $("#statusText").textContent = s.active
+    ? t("st_active", {t: ago(s.last_request, s.now)})
+    : (s.heartbeat ? t("st_stopped", {t: ago(s.heartbeat, s.now)}) : t("st_never"));
+  el.title = (s.active ? t("st_tip_on") : t("st_tip_off")) + "\n"
+    + t("st_last_req", {t: when(s.last_request)}) + "\n"
+    + Object.entries(s.last).map(([q, x]) => `${t("q_" + q)}: ${when(x.ts)} (${ago(x.ts, s.now)})`).join("\n")
+    + "\n" + t("st_credits", {n: s.credits_24h}) + (s.credits_left !== null ? " · " + t("st_left", {n: s.credits_left}) : "");
+  const wh = s.last["2"];
+  if (!$("#whNote").dataset.busy) $("#whNote").textContent = wh?.ts ? t("wh_updated", {t: ago(wh.ts, s.now)}) : "";
+}
+async function loadStatus() {
+  try {
+    const r = await fetch("/api/status");
+    if (!r.ok) throw new Error();
+    STATUS = await r.json();
+    showStatus(STATUS);
+  } catch (e) {
+    $("#status").classList.remove("on"); $("#status").classList.add("off");
+    $("#statusText").textContent = t("st_unreachable");
+  }
+}
+$("#whRefresh").onclick = async () => {
+  const b = $("#whRefresh"), n = $("#whNote");
+  b.disabled = true; n.dataset.busy = "1"; n.className = "note"; n.textContent = t("wh_asking");
+  try {
+    const res = await fetch("/api/refresh/warehouse", {method: "POST", headers: {"X-Requested-With": "rgtool"}});
+    const r = await res.json();
+    if (r.ok) { n.className = "note ok"; n.textContent = t("wh_done"); await load(); }
+    else { n.className = "note err"; n.textContent = t("err_" + r.code, r.p || {}); }
+  } catch (e) { n.className = "note err"; n.textContent = t("err_failed") + " " + e.message; }
+  b.disabled = false; delete n.dataset.busy;
+  loadStatus();
+};
+
+applyStatic();
+load(); loadStatus();
+setInterval(load, 5 * 60 * 1000);
+setInterval(loadStatus, 60 * 1000);
+</script>
+</body>
+</html>
